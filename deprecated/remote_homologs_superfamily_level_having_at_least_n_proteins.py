@@ -30,22 +30,21 @@ def get_seq_rep(idwithseq):
 
 start = time.time()
 at_least_n_proteins_per_sfam = [1, 5, 10, 20, 30]
-for n in at_least_n_proteins_per_sfam:
-    data = []
-    for i, (sfam, remote_homologs) in enumerate(remote_homolog_dict.items()):
-        if len(remote_homologs) < n: continue
-        print(i, sfam, remote_homologs)
-        
-        for remhom in remote_homologs:
-            seq = fasta_seq_dict[remhom]["seq"]
-            idwithseq = [(remhom, seq)]
-            seq_rep = get_seq_rep(idwithseq) # shape: 768
+# for n in at_least_n_proteins_per_sfam:
+data = []
+for i, (sfam, remote_homologs) in enumerate(remote_homolog_dict.items()):
+    print(i, sfam, remote_homologs)
+    
+    for remhom in remote_homologs:
+        seq = fasta_seq_dict[remhom]["seq"]
+        idwithseq = [(remhom, seq)]
+        seq_rep = get_seq_rep(idwithseq) # shape: 768
 
-            data.append(np.array([remhom, sfam, seq_rep], dtype=object))
-        #     break
-        # if i>50: break
-    end = time.time()
-    print(f"time required: {(end-start)/60}") # in minutes
-    print(len(data))
+        data.append(np.array([remhom, sfam, seq_rep], dtype=object))
+    #     break
+    # if i>50: break
+end = time.time()
+print(f"time required: {(end-start)/60}") # in minutes
+print(len(data))
 
-    Utils.save_as_pickle(np.array(data), f"data/tmp/remote_homologs/remote_homologs_at_th_{seq_identity_th}_n_{n}.pkl")
+Utils.save_as_pickle(np.array(data), f"data/tmp/remote_homologs/remote_homologs_at_th_{seq_identity_th}.pkl")

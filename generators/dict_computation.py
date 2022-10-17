@@ -28,7 +28,7 @@ def get_fam_and_sfam_dict():
 
     print("Computing Family and Superfamily dictionary.")
     col_names = "FA-DOMID FA-PDBID FA-PDBREG FA-UNIID FA-UNIREG SF-DOMID SF-PDBID SF-PDBREG SF-UNIID SF-UNIREG SCOPCLA".split(" ")
-    df = pd.read_csv("data/downloads/scop-cla-latest.txt", names=col_names, delim_whitespace=True, skiprows=6, header=None)
+    df = pd.read_csv("data/downloaded/scop-cla-latest.txt", names=col_names, delim_whitespace=True, skiprows=6, header=None)
     # print(df.columns)
     print(df.head())
 
