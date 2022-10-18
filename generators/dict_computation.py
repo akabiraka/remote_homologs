@@ -74,15 +74,12 @@ def get_cluster_dict(seq_identity_th):
 # sample usage
 # get_cluster_dict(95)
 
-def get_fasta_seq_dict():
-    fasta_seq_dict_path = f"data/tmp/fasta_seq_dict.pkl"
+def get_fasta_seq_dict(inp_file_path="data/downloaded/scop_sf_represeq_lib_latest.fa", fasta_seq_dict_path="data/generated/fasta_seq_dict.pkl"):
+    
     if osp.exists(fasta_seq_dict_path):
         fasta_seq_dict = Utils.load_pickle(fasta_seq_dict_path)
         print(f"    num of seq: {len(fasta_seq_dict)}")
         return fasta_seq_dict
-
-
-    inp_file_path = f"data/downloads/scop_sf_represeq_lib_latest.fa"
 
     fasta_seq_dict = {}
     for record in SeqIO.parse(inp_file_path, "fasta"):
@@ -90,7 +87,6 @@ def get_fasta_seq_dict():
         fasta_seq_dict[record.id] = {"description": record.description, "seq": str(record.seq)}
         # break
         
-
     Utils.save_as_pickle(fasta_seq_dict, fasta_seq_dict_path)
     print(f"    num of seq: {len(fasta_seq_dict)}")
     return fasta_seq_dict
