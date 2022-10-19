@@ -46,14 +46,16 @@ def compute_remote_homologs_for_each_superfamily(seq_identity_th=90):
             new_sfam_dict[sf] = sfam_domain_id_set
         # if i==1000: break
 
-    
+    new_sfam_dict = dict(sorted(new_sfam_dict.items(), key=lambda item: len(item[1]), reverse=True)) # sort the dict by the number of proteins in it by descending order
     Utils.save_as_pickle(new_sfam_dict, out)
     # print(new_sfam_dict)
     return new_sfam_dict
 
 new_sfam_dict = compute_remote_homologs_for_each_superfamily(10) # [10, 20, 30, 40, 50, 60, 70, 80, 90]
-print(f"num of superfamilies: {len(new_sfam_dict)}")
+
 count = 0
 for sf, sfam_domain_id_set in new_sfam_dict.items():
+    print(len(sfam_domain_id_set))
     count += len(sfam_domain_id_set)
 print(f"number of prots: {count}")
+print(f"num of superfamilies: {len(new_sfam_dict)}")
