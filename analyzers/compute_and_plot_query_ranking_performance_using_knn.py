@@ -1,3 +1,4 @@
+from cProfile import label
 import sys
 sys.path.append("../remote_homologs")
 
@@ -7,7 +8,7 @@ import collections
 from sklearn import metrics
 import utils as Utils
 
-def compute_f1_at_k(positive_label, num_of_positive_examples, ranked_neighbor_indices, K=1):
+def compute_f1_at_k(positive_label, num_of_positive_examples, ranked_neighbor_indices, sfam_labels, K=1):
     # the ground-truth labels of K best neighbors
     ones = np.repeat([1], num_of_positive_examples)[:K] # first K ranked neighbors should be relevent as 1
     y_true = np.repeat([0], K)
@@ -53,9 +54,9 @@ def compute_query_ranking_performance_metric(seqs_rep, sfam_labels):
         
         # compute f1 score for each query at K
         # K=1 #n_neighbors 1, 5, 10
-        f1at1 = compute_f1_at_k(sfam, sfam_freq_dict[sfam], ranked_neighbor_indices, K=1)
-        f1at5 = compute_f1_at_k(sfam, sfam_freq_dict[sfam], ranked_neighbor_indices, K=5)
-        f1at10 = compute_f1_at_k(sfam, sfam_freq_dict[sfam], ranked_neighbor_indices, K=10)
+        f1at1 = compute_f1_at_k(sfam, sfam_freq_dict[sfam], ranked_neighbor_indices, sfam_labels, K=1)
+        f1at5 = compute_f1_at_k(sfam, sfam_freq_dict[sfam], ranked_neighbor_indices, sfam_labels, K=5)
+        f1at10 = compute_f1_at_k(sfam, sfam_freq_dict[sfam], ranked_neighbor_indices, sfam_labels, K=10)
         print(f"query no: {i}: f1at1={f1at1}, f1at5={f1at5}, f1at10={f1at10}")
         f1_scores["at1"].append(f1at1)
         f1_scores["at5"].append(f1at5)
@@ -93,7 +94,29 @@ def accumulate_seq_reps_and_sf_labels(seq_identity_th):
     # Utils.save_as_pickle(Y, f"data/generated/esm_seqs_rep_with_sfam_at_seq_identity/{seq_identity_th}_sfam.pkl")
     return X, Y
 
-seq_identity_th=10
-seqs_rep, sfam_labels = accumulate_seq_reps_and_sf_labels(seq_identity_th)
-f1_scores = compute_query_ranking_performance_metric(seqs_rep, sfam_labels)
-Utils.save_as_pickle(f1_scores, f"outputs/remote_homology_f1_scores_for_each_query_at_k_neighbors_using_esm/seq_identity_th_{seq_identity_th}.pkl")
+# first run this for [10, 20, 30, 40, 50, 60, 70, 80, 90]
+# seq_identity_th=90
+# seqs_rep, sfam_labels = accumulate_seq_reps_and_sf_labels(seq_identity_th)
+# f1_scores = compute_query_ranking_performance_metric(seqs_rep, sfam_labels)
+# Utils.save_as_pickle(f1_scores, f"outputs/remote_homology_f1_scores_for_each_query_at_k_neighbors_using_esm/seq_identity_th_{seq_identity_th}.pkl")
+
+#do plotting: change accordingly
+seq_identity_ths = list(range(10, 100, 10))
+y1, y5, y10 = [], [], []
+for seq_identity_th in seq_identity_ths:
+    f1_scores = Utils.load_pickle(f"outputs/remote_homology_f1_scores_for_each_query_at_k_neighbors_using_esm/seq_identity_th_{seq_identity_th}.pkl")
+    print(np.mean(f1_scores["at1"]), np.mean(f1_scores["at5"]), np.mean(f1_scores["at10"])) # std does not makes sense, cause std=1-mean here
+    y1.append(np.mean(f1_scores["at1"]))
+    y5.append(np.mean(f1_scores["at5"]))
+    y10.append(np.mean(f1_scores["at10"]))
+
+# import matplotlib.pyplot as plt
+# _, ax = plt.subplots()
+# ax.plot(seq_identity_ths, y1, label="Mean F1-score@Top1 (ESM)")
+# ax.plot(seq_identity_ths, y5, label="Mean F1-score@Top5 (ESM)")
+# ax.plot(seq_identity_ths, y10, label="Mean F1-score@Top10 (ESM)")
+# ax.invert_xaxis()
+# ax.grid()
+# ax.legend()
+# # plt.show()
+# plt.savefig("outputs/images/remote_homology_query_ranking_by_esm_vs_decreasing_seq_identity.png", dpi=300, format="png", bbox_inches='tight', pad_inches=0.0)
