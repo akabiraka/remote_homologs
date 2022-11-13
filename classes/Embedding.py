@@ -80,19 +80,20 @@ import esm
 class SequenceESMEmbeddingLayer(nn.Module):
     def __init__(self) -> None:
         super(SequenceESMEmbeddingLayer, self).__init__()
-        self.esm_model, alphabet = esm.pretrained.esm1_t12_85M_UR50S()
+        self.esm_model, alphabet = esm.pretrained.esm2_t33_650M_UR50D() #esm2_t6_8M_UR50D() #esm1_t12_85M_UR50S()
+        self.last_layer_num = 33 #12, 6 
         self.esm_batch_converter = alphabet.get_batch_converter()
 
     def forward(self, id, seq, requires_grad=False):
         uniprotid, batch_strs, seq_tokens = self.esm_batch_converter([(id, seq)])
 
         if requires_grad:
-            results = self.esm_model(seq_tokens, repr_layers=[12], return_contacts=False)
+            results = self.esm_model(seq_tokens, repr_layers=[self.last_layer_num], return_contacts=False)
         else:
             with torch.no_grad():
-                results = self.esm_model(seq_tokens, repr_layers=[12], return_contacts=False)
+                results = self.esm_model(seq_tokens, repr_layers=[self.last_layer_num], return_contacts=False)
         
-        token_reps = results["representations"][12] # tokens are amino-acid, mask or special tokens
+        token_reps = results["representations"][self.last_layer_num] # tokens are amino-acid, mask or special tokens
         # print(token_reps)
 
         seq_rep = token_reps[0, 1:len(seq)+1]

@@ -29,13 +29,16 @@ def get_fasta_seq_dict(inp_file_path="data/downloaded/scop_sf_represeq_lib_lates
 
     
 def compute_all_seqs_embedding(fasta_seq_dict, seq_embed_func, out_path):
+    num_of_seq = len(fasta_seq_dict)
     for i, (key, item) in enumerate(fasta_seq_dict.items()):
         # print(key, item["seq"])    
         seq_rep = seq_embed_func(key, item["seq"], requires_grad=False).detach().cpu().numpy() # this is on amino acid level
         Utils.save_as_pickle(seq_rep, f"{out_path}/{key}.pkl")
         # seq_rep = Utils.load_pickle(f"{out_path}/{key}.pkl") # tesing if saving is ok
-        print(i, seq_rep.shape)
-        # break
+        print(f"{i}|{num_of_seq}, {seq_rep.shape}")
+        # if i==10: break
+        
+model_name = "esm2_t33_650M_UR50D" #esm2_t6_8M_UR50D, esm2_t33_650M_UR50D, esm1_t12_85M_UR50S()
 fasta_seq_dict = get_fasta_seq_dict()
 seq_embed_func = SequenceEmbeddingLayer(embed_format="esm")  
-compute_all_seqs_embedding(fasta_seq_dict, seq_embed_func, out_path="data/generated/seqs_aalevel_embeddings_by_esm/")
+compute_all_seqs_embedding(fasta_seq_dict, seq_embed_func, out_path=f"data/generated/seqs_aalevel_embeddings_by_{model_name}/")

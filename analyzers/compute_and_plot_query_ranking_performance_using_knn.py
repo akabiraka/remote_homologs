@@ -1,4 +1,3 @@
-from cProfile import label
 import sys
 sys.path.append("../remote_homologs")
 
@@ -7,6 +6,7 @@ import numpy as np
 import collections
 from sklearn import metrics
 import utils as Utils
+import matplotlib.pyplot as plt
 
 def compute_f1_at_k(positive_label, num_of_positive_examples, ranked_neighbor_indices, sfam_labels, K=1):
     # the ground-truth labels of K best neighbors
@@ -71,9 +71,9 @@ def compute_query_ranking_performance_metric(seqs_rep, sfam_labels):
 # compute_query_ranking_performance_metric(seqs_rep, sfam_labels)
 
 
-def accumulate_seq_reps_and_sf_labels(seq_identity_th):
+def accumulate_seq_reps_and_sf_labels(seq_identity_th, model_name):
     remote_homolog_dict = Utils.load_pickle(f"data/generated/remote_homolog_dicts/at_{seq_identity_th}_sfam.pkl") #{sf1: {p1, p2}, sf2: {p3, p4}}
-    saved_seq_embedding_path = "data/generated/seqs_aalevel_embeddings_by_esm/"
+    saved_seq_embedding_path = f"data/generated/seqs_aalevel_embeddings_by_{model_name}/"
 
     X, Y = [], []
     for i, (sfam_id, prot_ids_set) in enumerate(remote_homolog_dict.items()):
@@ -90,33 +90,39 @@ def accumulate_seq_reps_and_sf_labels(seq_identity_th):
 
     X, Y = np.array(X), np.array(Y)
     print(X.shape, Y.shape)
-    # Utils.save_as_pickle(X, f"data/generated/esm_seqs_rep_with_sfam_at_seq_identity/{seq_identity_th}_seqs_rep.pkl")
-    # Utils.save_as_pickle(Y, f"data/generated/esm_seqs_rep_with_sfam_at_seq_identity/{seq_identity_th}_sfam.pkl")
+    # Utils.save_as_pickle(X, f"data/generated/esm2_seqs_rep_with_sfam_at_seq_identity/{seq_identity_th}_seqs_rep.pkl")
+    # Utils.save_as_pickle(Y, f"data/generated/esm2_seqs_rep_with_sfam_at_seq_identity/{seq_identity_th}_sfam.pkl")
     return X, Y
 
 # first run this for [10, 20, 30, 40, 50, 60, 70, 80, 90]
+# model_name = "esm2_t33_650M_UR50D" #esm2_t6_8M_UR50D, esm2_t33_650M_UR50D, esm1_t12_85M_UR50S()
 # seq_identity_th=90
-# seqs_rep, sfam_labels = accumulate_seq_reps_and_sf_labels(seq_identity_th)
+# seqs_rep, sfam_labels = accumulate_seq_reps_and_sf_labels(seq_identity_th, model_name)
 # f1_scores = compute_query_ranking_performance_metric(seqs_rep, sfam_labels)
-# Utils.save_as_pickle(f1_scores, f"outputs/remote_homology_f1_scores_for_each_query_at_k_neighbors_using_esm/seq_identity_th_{seq_identity_th}.pkl")
+# Utils.save_as_pickle(f1_scores, f"outputs/remote_homology_f1_scores_for_each_query_at_k_neighbors_using_{model_name}/seq_identity_th_{seq_identity_th}.pkl")
 
 #do plotting: change accordingly
-seq_identity_ths = list(range(10, 100, 10))
-y1, y5, y10 = [], [], []
-for seq_identity_th in seq_identity_ths:
-    f1_scores = Utils.load_pickle(f"outputs/remote_homology_f1_scores_for_each_query_at_k_neighbors_using_esm/seq_identity_th_{seq_identity_th}.pkl")
-    print(np.mean(f1_scores["at1"]), np.mean(f1_scores["at5"]), np.mean(f1_scores["at10"])) # std does not makes sense, cause std=1-mean here
-    y1.append(np.mean(f1_scores["at1"]))
-    y5.append(np.mean(f1_scores["at5"]))
-    y10.append(np.mean(f1_scores["at10"]))
+_, ax = plt.subplots()
+markers = ["o", "x", "*"]
+linestyles = ['-', '--', '-.']
+for i, model_name in enumerate(["esm1_t12_85M_UR50S", "esm2_t6_8M_UR50D", "esm2_t33_650M_UR50D"]):
+    seq_identity_ths = list(range(10, 100, 10))
+    y1, y5, y10 = [], [], []
+    for seq_identity_th in seq_identity_ths:
+        f1_scores = Utils.load_pickle(f"outputs/remote_homology_f1_scores_for_each_query_at_k_neighbors_using_{model_name}/seq_identity_th_{seq_identity_th}.pkl")
+        print(np.mean(f1_scores["at1"]), np.mean(f1_scores["at5"]), np.mean(f1_scores["at10"])) # std does not makes sense, cause std=1-mean here
+        y1.append(np.mean(f1_scores["at1"]))
+        y5.append(np.mean(f1_scores["at5"]))
+        y10.append(np.mean(f1_scores["at10"]))
 
-# import matplotlib.pyplot as plt
-# _, ax = plt.subplots()
-# ax.plot(seq_identity_ths, y1, label="Mean F1-score@Top1 (ESM)")
-# ax.plot(seq_identity_ths, y5, label="Mean F1-score@Top5 (ESM)")
-# ax.plot(seq_identity_ths, y10, label="Mean F1-score@Top10 (ESM)")
-# ax.invert_xaxis()
-# ax.grid()
-# ax.legend()
-# # plt.show()
-# plt.savefig("outputs/images/remote_homology_query_ranking_by_esm_vs_decreasing_seq_identity.png", dpi=300, format="png", bbox_inches='tight', pad_inches=0.0)
+    
+    ax.plot(seq_identity_ths, y1, label=f"Top1 ({model_name})", marker=markers[i], linestyle=linestyles[i])
+    ax.plot(seq_identity_ths, y5, label=f"Top5 ({model_name})", marker=markers[i], linestyle=linestyles[i])
+    ax.plot(seq_identity_ths, y10, label=f"Top10 ({model_name})", marker=markers[i], linestyle=linestyles[i])
+ax.invert_xaxis()
+ax.grid()
+ax.legend(loc="upper right", fontsize="xx-small")
+ax.set_xlabel("Decreasing sequence-identity threshold")
+ax.set_ylabel("Mean F1@TopX")
+# plt.show()
+plt.savefig("outputs/images/remote_homology_query_ranking_by_esm_vs_decreasing_seq_identity.png", dpi=300, format="png", bbox_inches='tight', pad_inches=0.0)
